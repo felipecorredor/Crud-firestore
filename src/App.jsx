@@ -1,8 +1,14 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, Fragment } from 'react'
 import { firebase } from './firebase'
 import { useForm } from "react-hook-form";
 import { ArrayList } from './components/ArrayList';
 import { Form } from './components/Form'
+// SACKBAR
+import { SnackBar } from './widgest/SnackBar';
+// MODAL
+import { ModalUI } from './widgest/ModalUI';
+// TYPOGRAPHY
+import Typography from '@material-ui/core/Typography';
 
 function App() {
 
@@ -14,6 +20,13 @@ function App() {
   const [edit, setEdit] = useState(false)
   const [field, setField] = useState({})
 
+  // SACKBAR
+  const [openSnack, setOpenSnack] = useState(false);
+  const [messageInfo, setMessageInfo] = useState('');
+
+  // MODAL
+  const [open, setOpen] = useState(false);
+  const [idDelete, setIdDelete] = useState(null)
   // CALL TO API AND GET DATA OF FIRESTORE
   useEffect(() => {
     const fetchData = async () => {
@@ -38,7 +51,7 @@ function App() {
     const db = firebase.firestore()
     await db.collection("tareas").doc(id).update(data)
     .then(function() {      
-      console.log("Document successfully updated!");
+      messageSnackBar("updated")      
       const arrayEditado = tasks.map(item => ( item.id === id ? {id: item.id, ...data} : item ))
       setTasks(arrayEditado)
       createButton()
@@ -54,6 +67,7 @@ function App() {
     const db = firebase.firestore()
     await db.collection("tareas").add(data)
       .then(function(docRef) {
+        messageSnackBar("created")
         setTasks([ ...tasks, {id: docRef.id, ...data } ])
         e.target.reset();
       })
@@ -66,8 +80,9 @@ function App() {
   const deleteFirestore = async id => {
     const db = firebase.firestore()
     db.collection("tareas").doc(id).delete()
-    .then(function() {
-      console.log("Document successfully deleted!");
+    .then(function() {      
+      handleClose()
+      messageSnackBar("deleted")      
     })
     .catch(function(error) {
       console.error("Error removing document: ", error);
@@ -87,32 +102,73 @@ function App() {
     setEdit(false)
     setField({ })
   }
+
+  const handleCloseSnack = (reason) => {
+    if (reason === 'clickaway') {
+      return;
+    }
+    setOpenSnack(false);
+  };  
   
+  const messageSnackBar = (message) => {
+    setMessageInfo(`Document successfully ${message}!`)
+    setOpenSnack(true);
+  }  
+
+  const handleOpen = (id) => {
+    setOpen(true);
+    setIdDelete(id)
+  };
+
+  const handleClose = () => {
+    setOpen(false);
+  };
+
   return (    
-    <div className="container mt-3">      
-      <div className="row">      
-        <div className="col-md-6">     
-          <h3>Your list!</h3>     
-          <ul className="list-group">
-            <ArrayList tasks={tasks} 
-                       deleteFirestore={deleteFirestore} 
-                       editData={editData} />
-          </ul>
+    <Fragment>    
+
+      <div className="container mt-3">      
+        <div className="row">      
+          <div className="col-md-6">     
+            <h3>Your list!</h3>     
+            {tasks.length === 0 ?
+              <Typography variant="h6" component="h2" gutterBottom>
+                Without tasks
+              </Typography>
+            :
+            <ul className="list-group">
+              <ArrayList tasks={tasks}                          
+                         editData={editData} 
+                         handleOpen={handleOpen} />
+            </ul>
+            }
+          </div>
+          <div className="col-md-6">
+            <div className="d-flex">
+              <h3 style={{width: '100%'}}>{ edit ? 'Edit Task' : 'Add Task' }</h3>
+              <button className="float-rigth btn btn-primary" onClick={createButton}>Create</button>
+            </div>        
+            <Form reset={reset}
+                  field={field}
+                  edit={edit}                
+                  register={register} 
+                  handleSubmit={handleSubmit(onSubmit)}
+                  errors={errors} />
+          </div>        
         </div>
-        <div className="col-md-6">
-        <div className="d-flex">
-          <h3 style={{width: '100%'}}>{ edit ? 'Edit Task' : 'Add Task' }</h3>
-          <button className="float-rigth btn btn-primary" onClick={createButton}>Create</button>
-        </div>        
-          <Form reset={reset}
-                field={field}
-                edit={edit}                
-                register={register} 
-                handleSubmit={handleSubmit(onSubmit)}
-                errors={errors} />
-        </div>        
-      </div>
-    </div>  
+      </div>  
+
+      <SnackBar openSnack={openSnack} 
+                messageInfo={messageInfo} 
+                handleCloseSnack={handleCloseSnack}/>
+
+      <ModalUI idDelete={idDelete}
+               handleClose={handleClose} 
+               open={open} 
+               deleteFirestore={deleteFirestore}  />
+      
+    </Fragment>
+
   );
 }
 

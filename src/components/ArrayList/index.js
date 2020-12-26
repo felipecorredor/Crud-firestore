@@ -1,6 +1,6 @@
 import React from 'react'
 
-export const ArrayList = ({tasks, deleteFirestore, editData}) => {
+export const ArrayList = ({tasks, editData, handleOpen}) => {
   return (
     <React.Fragment>
       {
@@ -12,7 +12,7 @@ export const ArrayList = ({tasks, deleteFirestore, editData}) => {
               </div>
               {/* Delete */}  
               <div className="col-md-3">
-                <button className="btn btn-danger" onClick={() => deleteFirestore(task.id)}>
+                <button className="btn btn-danger" onClick={() => handleOpen(task.id)}>
                   Delete
                 </button>    
               </div>
