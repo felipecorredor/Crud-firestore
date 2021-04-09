@@ -1,5 +1,5 @@
 import React, { useEffect, useState, Fragment } from 'react'
-import { firebase } from './firebase'
+import { db } from './firebase'
 import { useForm } from "react-hook-form";
 import { ArrayList } from './components/ArrayList';
 import { Form } from './components/Form'
@@ -29,8 +29,7 @@ function App() {
   const [idDelete, setIdDelete] = useState(null)
   // CALL TO API AND GET DATA OF FIRESTORE
   useEffect(() => {
-    const fetchData = async () => {
-      const db = firebase.firestore()
+    const fetchData = async () => {      
       await db.collection("tareas").get()
       .then(querySnapshot => {      
         const arrayData = querySnapshot.docs.map(doc => ({id: doc.id, ...doc.data() }))
@@ -48,7 +47,6 @@ function App() {
 
   // FUNCTION UPDATE DOCUMENT
   const editFirestore = async (data, id, e) => {    
-    const db = firebase.firestore()
     await db.collection("tareas").doc(id).update(data)
     .then(function() {      
       messageSnackBar("updated")      
@@ -64,7 +62,6 @@ function App() {
 
   // FUNCTION CREATE DOCUMENT
   const create = async (data, e) => {    
-    const db = firebase.firestore()
     await db.collection("tareas").add(data)
       .then(function(docRef) {
         messageSnackBar("created")
@@ -78,7 +75,6 @@ function App() {
 
   // FUNCTION DELETE DOCUMENT
   const deleteFirestore = async id => {
-    const db = firebase.firestore()
     db.collection("tareas").doc(id).delete()
     .then(function() {      
       handleClose()
